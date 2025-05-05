@@ -43,6 +43,10 @@ namespace CloudParking.Controllers.Parking
             string? oid = User.GetObjectId();
             int reserveTime = 10; // In minutes  
 
+            if (oid == null) {
+                return NotFound("Malformed token, no object ID found");
+            }
+
             if (!await _parkingService.IsSlotAvailable(slotId))
             {
                 return NotFound($"Slot {slotId} not available.");
@@ -57,6 +61,11 @@ namespace CloudParking.Controllers.Parking
         {
             string? oid = User.GetObjectId();
 
+            if (oid == null)
+            {
+                return NotFound("Malformed token, no object ID found");
+            }
+
             if (!await _parkingService.CheckSlotOwned(slotId, oid))
             {
                 return NotFound($"Slot {slotId} not found or not reserved by you.");
@@ -70,6 +79,11 @@ namespace CloudParking.Controllers.Parking
         public async Task<IActionResult> CheckIn([FromBody] string slotId)
         {
             string? oid = User.GetObjectId();
+
+            if (oid == null)
+            {
+                return NotFound("Malformed token, no object ID found");
+            }
 
             if (!await _parkingService.CheckSlotOwned(slotId, oid))
             {
@@ -87,6 +101,11 @@ namespace CloudParking.Controllers.Parking
         public async Task<IActionResult> CheckOut([FromBody] string slotId)
         {
             string? oid = User.GetObjectId();
+
+            if (oid == null)
+            {
+                return NotFound("Malformed token, no object ID found");
+            }
 
             if (!await _parkingService.CheckSlotOwned(slotId, oid))
             {
