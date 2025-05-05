@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -6,14 +7,21 @@ namespace CloudParking.Controllers.Admin
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         // GET: api/<AdminController>
+        [HttpPost("create-parking")]
+        public IActionResult CreateParking([FromBody] string value)
+        {
+            // Implement logic to create parking
+            return Ok("Parking created successfully");
+        }
         [HttpGet]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
-        }
+        }                                                                                                   
 
         // GET api/<AdminController>/5
         [HttpGet("{id}")]

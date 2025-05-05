@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using CloudParking.DTO;
+using CloudParking.Services.Parking;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web;
+using MongoDB.Driver;
 
 namespace CloudParking.Controllers.Parking
 {
@@ -9,46 +14,86 @@ namespace CloudParking.Controllers.Parking
     [Authorize]
     public class ParkingSlotController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult GetSlots()
+        private readonly IMongoClient _client;
+        private readonly ParkingService _parkingService; // Add a ParkingService instance  
+
+        public ParkingSlotController(IMongoClient client, ParkingService parkingService)
         {
-            string? username = User.Identity?.Name;
-            Console.WriteLine($"User {username} is accessing parking slots.");
-            // Implement logic to get parking slots
-            return Ok(new { slots = new List<string> { "Slot1", "Slot2" } });
+            _client = client;
+            _parkingService = parkingService;  
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSlots()
+        {
+            var slots = await _parkingService.GetAllSlots();   
+            return Ok(slots);
+        }
+
         [HttpGet("available")]
         public IActionResult GetAvailableSlots()
         {
-            // Implement logic to get available parking slots
-            return Ok(new { availableSlots = new List<string> { "Slot1", "Slot2" } });
+            var slots = _parkingService.GetAvailableSlots();
+            return Ok(slots);
         }
 
         [HttpPost("reserve")]
-        public IActionResult ReserveSlot([FromBody] string slotId)
+        public async Task<IActionResult> ReserveSlotAsync([FromBody] string slotId)
         {
-            // Implement logic to reserve a parking slot
-            return Ok($"Slot {slotId} reserved successfully");
+            string? oid = User.GetObjectId();
+            int reserveTime = 10; // In minutes  
+
+            if (!await _parkingService.IsSlotAvailable(slotId))
+            {
+                return NotFound($"Slot {slotId} not available.");
+            }
+
+            Models.ParkingSlot slot = await _parkingService.ReserveSlot(slotId, oid, reserveTime);   
+            return Ok($"Slot {slotId} reserved successfully, free at {slot.FreeAt}");
         }
 
         [HttpPost("cancel")]
-        public IActionResult CancelReservation([FromBody] string slotId)
+        public async Task<IActionResult> CancelReservation([FromBody] string slotId)
         {
-            // Implement logic to cancel a parking slot reservation
-            return Ok($"Reservation for slot {slotId} cancelled successfully");
+            string? oid = User.GetObjectId();
+
+            if (!await _parkingService.CheckSlotOwned(slotId, oid))
+            {
+                return NotFound($"Slot {slotId} not found or not reserved by you.");
+            }
+
+            Models.ParkingSlot slot = await _parkingService.CancelSlot(slotId);
+            return Ok($"Reservation for slot {slot.Id} cancelled successfully");
         }
 
         [HttpPost("check-in")]
-        public IActionResult CheckIn([FromBody] string slotId)
+        public async Task<IActionResult> CheckIn([FromBody] string slotId)
         {
-            // Implement logic for check-in
-            return Ok($"Checked in to slot {slotId} successfully");
+            string? oid = User.GetObjectId();
+
+            if (!await _parkingService.CheckSlotOwned(slotId, oid))
+            {
+                return NotFound($"Slot {slotId} not found or not reserved by you.");
+            }
+            Models.ParkingSlot parkingSlot = await _parkingService.GetSlotById(slotId);
+            parkingSlot.IsOccupied = true;
+            parkingSlot.OccupiedAt = DateTime.UtcNow;
+            parkingSlot.FreeAt = DateTime.UtcNow.AddMinutes(100); 
+            Models.ParkingSlot result = await _parkingService.UpdateSlot(id: parkingSlot.Id.ToString(), parkingSlot);
+            return Ok($"Checked into slot {slotId} successfully, free at {result.FreeAt}");
         }
+
         [HttpPost("check-out")]
-        public IActionResult CheckOut([FromBody] string slotId)
+        public async Task<IActionResult> CheckOut([FromBody] string slotId)
         {
-            // Implement logic for check-out
-            return Ok($"Checked out of slot {slotId} successfully");
+            string? oid = User.GetObjectId();
+
+            if (!await _parkingService.CheckSlotOwned(slotId, oid))
+            {
+                return NotFound($"Slot {slotId} not found or not reserved by you.");
+            }
+            Models.ParkingSlot result = await _parkingService.CancelSlot(slotId);
+            return Ok($"Checked out of slot {result.Id}");
         }
     }
 }

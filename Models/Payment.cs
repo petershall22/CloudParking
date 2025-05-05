@@ -2,5 +2,9 @@
 {
     public class Payment
     {
+        public int Id { get; set; }
+        public int Amount { get; set; } // in pennies
+        public DateTime PaymentDate { get; set; }
+        public bool IsPaid { get; set; } = false;
     }
 }

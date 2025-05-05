@@ -58,7 +58,7 @@ builder.Services.AddSwaggerGen(swagger =>
 });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("Entra"));
-
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
