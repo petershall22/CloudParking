@@ -22,12 +22,10 @@
   <ItemGroup>
     <Folder Include="Controllers\Admin\" />
     <Folder Include="Controllers\Payment\" />
-    <Folder Include="Controllers\Auth\" />
     <Folder Include="Data\" />
     <Folder Include="DTO\" />
     <Folder Include="Models\" />
     <Folder Include="Services\Admin\" />
-    <Folder Include="Services\Auth\" />
     <Folder Include="Services\Parking\" />
     <Folder Include="Services\Payment\" />
     <Folder Include="Services\Users\" />
