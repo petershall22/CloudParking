@@ -1,6 +1,6 @@
 ﻿namespace CloudParking.DTO
 {
-    public class PaymentCto
+    public class PaymentDto
     {
     }
 }

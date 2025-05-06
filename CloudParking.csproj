@@ -23,9 +23,7 @@
     <Folder Include="Controllers\Admin\" />
     <Folder Include="Controllers\Payment\" />
     <Folder Include="Data\" />
-    <Folder Include="DTO\" />
     <Folder Include="Services\Admin\" />
-    <Folder Include="Services\Payment\" />
     <Folder Include="Services\Users\" />
   </ItemGroup>
 

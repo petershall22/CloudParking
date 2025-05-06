@@ -1,10 +1,13 @@
-﻿namespace CloudParking.Models
+﻿using MongoDB.Bson;
+
+namespace CloudParking.Models
 {
-    public class Payment
+    public class PaymentIntent
     {
-        public int Id { get; set; }
+        public ObjectId Id { get; set; }
         public int Amount { get; set; } // in pennies
         public DateTime? PaymentDate { get; set; }
         public bool IsPaid { get; set; } = false;
+        public DateTime? PayBy { get; set; }
     }
 }
