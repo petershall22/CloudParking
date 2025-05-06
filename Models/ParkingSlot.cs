@@ -12,7 +12,7 @@ namespace CloudParking.Models
         public DateTime? FreeAt { get; set; }
         public string? UserId { get; set; }
         public int ParkingLotId { get; set; }
-        public string ParkingLotName { get; set; } = string.Empty;
         public string LatLong { get; set; } = string.Empty;
+        public int HourlyRate { get; set; }
     }
 }
