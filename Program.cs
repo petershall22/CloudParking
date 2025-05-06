@@ -103,6 +103,8 @@ catch (Exception ex)
     Console.WriteLine(ex);
 }
 
+var expiredSlotsCheckTimer = new Timer(ParkingService.UpdateExpiredSlots, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

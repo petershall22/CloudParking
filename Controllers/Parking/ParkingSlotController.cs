@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using CloudParking.DTO;
 using CloudParking.Services.Parking;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -63,7 +62,7 @@ namespace CloudParking.Controllers.Parking
 
             if (oid == null)
             {
-                return NotFound("Malformed token, no object ID found");
+                return NotFound("Malformed token, user object ID not found");
             }
 
             if (!await _parkingService.CheckSlotOwned(slotId, oid))

@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\Users\**" />
+    <Compile Remove="Data\**" />
     <Content Remove="Controllers\Users\**" />
+    <Content Remove="Data\**" />
     <EmbeddedResource Remove="Controllers\Users\**" />
+    <EmbeddedResource Remove="Data\**" />
     <None Remove="Controllers\Users\**" />
+    <None Remove="Data\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,7 +26,6 @@
   <ItemGroup>
     <Folder Include="Controllers\Admin\" />
     <Folder Include="Controllers\Payment\" />
-    <Folder Include="Data\" />
     <Folder Include="Services\Admin\" />
     <Folder Include="Services\Users\" />
   </ItemGroup>
