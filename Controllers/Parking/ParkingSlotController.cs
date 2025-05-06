@@ -40,13 +40,13 @@ namespace CloudParking.Controllers.Parking
             return Ok(slots);
         }
 
-        [HttpPost("reserve")]
-        public async Task<IActionResult> ReserveSlotAsync([FromBody] string slotId)
+        [HttpPost("initiate-reservation")]
+        public async Task<IActionResult> ReserveSlot([FromBody] string slotId, TimeSpan duration)
         {
             string? oid = User.GetObjectId();
-            int reserveTime = 10; // In minutes  
 
-            if (oid == null) {
+            if (oid == null)
+            {
                 return NotFound("Malformed token, no object ID found");
             }
 
@@ -55,27 +55,19 @@ namespace CloudParking.Controllers.Parking
                 return NotFound($"Slot {slotId} not available.");
             }
 
-            Models.ParkingSlot slot = await _parkingService.ReserveSlot(slotId, oid, reserveTime);   
-            return Ok($"Slot {slotId} reserved successfully, free at {slot.FreeAt}");
-        }
+            ParkingSlot parkingSlot = await _parkingService.GetSlotById(slotId);
+            parkingSlot.UserId = oid;
+            parkingSlot.IsOccupied = false;
+            parkingSlot.OccupiedAt = DateTime.UtcNow;
+            parkingSlot.FreeAt = DateTime.UtcNow + duration;
+             
+            await _parkingService.UpdateSlot(id: parkingSlot.Id, parkingSlot);
 
-        [HttpPost("cancel")]
-        public async Task<IActionResult> CancelReservation([FromBody] string slotId)
-        {
-            string? oid = User.GetObjectId();
+            ParkingSlot slot = await _parkingService.GetSlotById(slotId);
+            int amount = (int)duration.TotalHours * slot.HourlyRate;
+            var paymentIntentSecret = _paymentService.CreatePaymentIntent(oid, amount);
 
-            if (oid == null)
-            {
-                return NotFound("Malformed token, user object ID not found");
-            }
-
-            if (!await _parkingService.CheckSlotOwned(slotId, oid))
-            {
-                return NotFound($"Slot {slotId} not found or not reserved by you.");
-            }
-
-            Models.ParkingSlot slot = await _parkingService.CancelSlot(slotId);
-            return Ok($"Reservation for slot {slot.Id} cancelled successfully");
+            return Ok(paymentIntentSecret);
         }
 
         [HttpPost("check-in")]
@@ -95,7 +87,8 @@ namespace CloudParking.Controllers.Parking
             Models.ParkingSlot parkingSlot = await _parkingService.GetSlotById(slotId);
             parkingSlot.IsOccupied = true;
             parkingSlot.OccupiedAt = DateTime.UtcNow;
-            parkingSlot.FreeAt = DateTime.UtcNow.AddMinutes(100); 
+            parkingSlot.FreeAt = DateTime.UtcNow + duration;
+     
             Models.ParkingSlot result = await _parkingService.UpdateSlot(id: parkingSlot.Id.ToString(), parkingSlot);
             return Ok($"Checked into slot {slotId} successfully, free at {result.FreeAt}");
         }
@@ -114,16 +107,16 @@ namespace CloudParking.Controllers.Parking
             {
                 return NotFound($"Slot {slotId} not found or not reserved by you.");
             }
-            if (!await _parkingService.IsSlotOccupied(slotId))
+            if (!await _parkingService.IsSlotAvailable(slotId))
             {
                 return NotFound($"Slot {slotId} not occupied.");
             }
             ParkingSlot slot = await _parkingService.GetSlotById(slotId);
-            TimeSpan? duration = DateTime.UtcNow - (slot.OccupiedAt;
-            var amount = (int)duration.TotalHours * slot.HourlyRate;
+            TimeSpan duration = DateTime.UtcNow - (slot.OccupiedAt ?? DateTime.UtcNow);
+            int amount = (int)duration.TotalHours * slot.HourlyRate;
             var paymentIntent = _paymentService.CreatePaymentIntent(oid, amount);
             Models.ParkingSlot result = await _parkingService.CancelSlot(slotId);
-            return Ok({"slotId": slot.Id, "paymentIntentId": paymentIntent.Id });
+            return Ok("Checked out");
         }
     }
 }
