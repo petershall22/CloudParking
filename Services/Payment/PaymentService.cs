@@ -18,6 +18,7 @@ namespace CloudParking.Services.Payment
             PaymentIntent newPaymentIntent = new PaymentIntent();
             newPaymentIntent.Amount = amount
             newPaymentIntent.PayBy = DateTime.UtcNow.AddDays(5);
+            newPaymentIntent.UserId = userId
 
             var collection = _database.GetCollection<PaymentIntent>("payment_intent");
             await collection.InsertOneAsync(newPaymentIntent);

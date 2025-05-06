@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
+using CloudParking.Models;
 using CloudParking.Services.Parking;
+using CloudParking.Services.Payment;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +17,13 @@ namespace CloudParking.Controllers.Parking
     {
         private readonly IMongoClient _client;
         private readonly ParkingService _parkingService; // Add a ParkingService instance  
+        private readonly PaymentService _paymentService; // Add a PaymentService instance
 
-        public ParkingSlotController(IMongoClient client, ParkingService parkingService)
+        public ParkingSlotController(IMongoClient client, ParkingService parkingService, PaymentService paymentService)
         {
             _client = client;
             _parkingService = parkingService;  
+            _paymentService = paymentService;
         }
 
         [HttpGet]
@@ -110,8 +114,16 @@ namespace CloudParking.Controllers.Parking
             {
                 return NotFound($"Slot {slotId} not found or not reserved by you.");
             }
+            if (!await _parkingService.IsSlotOccupied(slotId))
+            {
+                return NotFound($"Slot {slotId} not occupied.");
+            }
+            ParkingSlot slot = await _parkingService.GetSlotById(slotId);
+            TimeSpan? duration = DateTime.UtcNow - (slot.OccupiedAt;
+            var amount = (int)duration.TotalHours * slot.HourlyRate;
+            var paymentIntent = _paymentService.CreatePaymentIntent(oid, amount);
             Models.ParkingSlot result = await _parkingService.CancelSlot(slotId);
-            return Ok($"Checked out of slot {result.Id}");
+            return Ok({"slotId": slot.Id, "paymentIntentId": paymentIntent.Id });
         }
     }
 }
